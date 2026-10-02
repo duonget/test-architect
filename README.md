@@ -76,12 +76,12 @@ native skill discovery, select `test-architect`; for instruction-based integrati
 ask the agent to follow `AGENTS.md` and the installed `SKILL.md`.
 See the platform-specific notes in the compatibility table.
 
-The installer creates missing instruction files; existing Claude Code, Copilot,
-Cline/Roo Code and Windsurf instruction files are preserved. When those files already
-exist, add a reference to `AGENTS.md` and `.agents/skills/test-architect/SKILL.md` yourself.
-The installer appends Test Architect instructions to `AGENTS.md` when absent and
-replaces its own Cursor rule file. Global model settings and agent permissions are
-not configured by this installer.
+The installer preserves existing instruction content and appends a marked reference
+to the shared skill once. This includes existing Cursor rules. Cline supports either
+a `.clinerules` file or directory; Roo uses an existing `.roo/rules/` directory or
+the `.roorules` fallback file. Re-running the installer refreshes the shared skill
+payload without duplicating the marked references. Global model settings and agent
+permissions are not configured by this installer.
 
 ---
 
@@ -191,12 +191,13 @@ adapters, not a claim of identical behavior or measured performance on every age
 | AI Platform | Integration files | Usage / discovery |
 | :--- | :--- | :--- |
 | **Claude Code** | `CLAUDE.md` → `AGENTS.md` and shared skill | Ask to follow Test Architect testing instructions. |
-| **Cline / Roo Code** | `.clinerules` → `AGENTS.md` | Ask to read the rules; adapt their reference to your client's supported rule layout if needed. |
+| **Cline** | `.clinerules` or `.clinerules/test-architect.md` | Ask to follow Test Architect testing instructions. |
 | **Cursor** | `.cursor/rules/test-architect.mdc` | Project rule targets test files; reference Test Architect explicitly when generating new tests. |
 | **GitHub Copilot** | `.github/copilot-instructions.md` | Use repository instructions when asking Copilot to write tests. |
 | **Google Antigravity** | `.agents/skills/test-architect/SKILL.md` | Ask to use the `test-architect` skill. |
 | **OpenAI Codex** | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` | Select via `/skills` or prompt `$test-architect Write tests for <file>`. Restart if absent. |
 | **OpenCode** | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` | Restart after installation, then ask to load `test-architect`. Existing skill permissions apply. |
+| **Roo Code** | `.roo/rules/test-architect.md` when the directory exists, otherwise `.roorules` | Workspace rules reference the shared skill; existing team rules are preserved. |
 | **Windsurf** | `.windsurfrules` → `AGENTS.md` | Ask Cascade to follow Test Architect testing instructions. |
 | **Other agents** | `AGENTS.md` / `SKILL.md` | Explicitly load the instructions if automatic discovery is unavailable. |
 

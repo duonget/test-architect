@@ -227,6 +227,38 @@ class TestArchitectSelfAudit(unittest.TestCase):
             self.assertTrue(instructions.startswith("# Project instructions\nKeep existing rules.\n"))
             self.assertEqual(instructions.count("# AGENTS.md: Machine-Readable Context"), 1)
 
+    def test_existing_agent_rules_survive_repeated_installation(self):
+        for directory_rules in (False, True):
+            with self.subTest(directory_rules=directory_rules), tempfile.TemporaryDirectory() as tmpdir:
+                target = Path(tmpdir) / "existing project"
+                target.mkdir()
+                paths = ["CLAUDE.md", ".github/copilot-instructions.md", ".windsurfrules",
+                         ".cursor/rules/test-architect.mdc", "AGENTS.md"]
+                if directory_rules:
+                    paths += [".clinerules/team.md", ".roo/rules/team.md"]
+                    references = [".clinerules/test-architect.md", ".roo/rules/test-architect.md"]
+                else:
+                    paths += [".clinerules", ".roorules"]
+                    references = [".clinerules", ".roorules"]
+                original = "# Team policy\nWe are evaluating Test Architect.\nPreserve our custom rules.\n"
+                for relative in paths:
+                    path = target / relative
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text(original)
+                for _ in range(2):
+                    subprocess.run(["bash", str(self.repo_root / "install.sh"), str(target)],
+                                   capture_output=True, text=True, timeout=10, check=True)
+                for relative in paths:
+                    self.assertTrue((target / relative).read_text().startswith(original), relative)
+                for relative in paths[:5] + references:
+                    content = (target / relative).read_text()
+                    self.assertEqual(content.count("<!-- test-architect:reference -->"), 1, relative)
+                    self.assertIn(".agents/skills/test-architect/SKILL.md", content)
+                self.assertIn("# AGENTS.md: Machine-Readable Context", (target / "AGENTS.md").read_text())
+                if directory_rules:
+                    self.assertEqual((target / ".clinerules/team.md").read_text(), original)
+                    self.assertEqual((target / ".roo/rules/team.md").read_text(), original)
+
     def test_incomplete_payload_does_not_create_target(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

@@ -56,6 +56,23 @@ echo ""
 
 INSTALLED_AGENTS=()
 
+# Append a small, uniquely marked reference without replacing user instructions.
+# The shared SKILL.md remains the source of truth when its workflow is updated.
+ensure_reference() {
+  local destination="$1"
+  local marker='<!-- test-architect:reference -->'
+  if [ ! -f "$destination" ] || ! grep -Fq "$marker" "$destination"; then
+    printf '\n\n%s\n' "$marker" >> "$destination"
+    cat << 'EOF' >> "$destination"
+## Test Architect testing workflow
+When writing or updating tests, read `.agents/skills/test-architect/SKILL.md`.
+Build the five-dimensional test matrix, mock only external I/O, and run the tests.
+Resolve helper scripts and templates relative to `.agents/skills/test-architect/`.
+<!-- /test-architect:reference -->
+EOF
+  fi
+}
+
 # 1. Shared native skill discovery for Codex, OpenCode and Antigravity.
 mkdir -p "$TARGET_ROOT/.agents/skills/$SKILL_NAME/scripts"
 mkdir -p "$TARGET_ROOT/.agents/skills/$SKILL_NAME/templates"
@@ -73,15 +90,17 @@ if [ ! -f "$TARGET_ROOT/AGENTS.md" ]; then
   INSTALLED_AGENTS+=("Universal AGENTS.md (Root context)")
 else
   # Append notice if not already present
-  if ! grep -q "Test Architect" "$TARGET_ROOT/AGENTS.md"; then
+  if ! grep -Fq '# AGENTS.md: Machine-Readable Context for AI Coding Agents' "$TARGET_ROOT/AGENTS.md"; then
     printf '\n\n---\n' >> "$TARGET_ROOT/AGENTS.md"
     cat "$SCRIPT_DIR/AGENTS.md" >> "$TARGET_ROOT/AGENTS.md"
     INSTALLED_AGENTS+=("Universal AGENTS.md (Appended)")
   fi
 fi
+ensure_reference "$TARGET_ROOT/AGENTS.md"
 
 # 3. Cursor Rules Integration (.cursor/rules/)
 mkdir -p "$TARGET_ROOT/.cursor/rules"
+if [ ! -f "$TARGET_ROOT/.cursor/rules/test-architect.mdc" ]; then
 cat << 'EOF' > "$TARGET_ROOT/.cursor/rules/test-architect.mdc"
 ---
 description: Test Architect - Senior Quality Engineering & Automated Testing Guidelines
@@ -96,6 +115,8 @@ When writing or refactoring unit, integration, or regression tests:
 4. Zero Tautology: Never write tests that cannot fail (e.g. expect(true).toBe(true)).
 5. For full guidelines, inspect .agents/skills/test-architect/SKILL.md or AGENTS.md.
 EOF
+fi
+ensure_reference "$TARGET_ROOT/.cursor/rules/test-architect.mdc"
 INSTALLED_AGENTS+=("Cursor (.cursor/rules/test-architect.mdc)")
 
 # 4. GitHub Copilot Instructions (.github/copilot-instructions.md)
@@ -110,8 +131,9 @@ When generating unit or integration tests:
 - Never mock internal business logic or system under test; only mock external boundary APIs.
 - Refer to AGENTS.md for full testing guidelines.
 EOF
-  INSTALLED_AGENTS+=("GitHub Copilot (.github/copilot-instructions.md)")
 fi
+ensure_reference "$TARGET_ROOT/.github/copilot-instructions.md"
+INSTALLED_AGENTS+=("GitHub Copilot (.github/copilot-instructions.md)")
 
 # 5. Claude Code / Windsurf / Cline Rules
 if [ ! -f "$TARGET_ROOT/CLAUDE.md" ]; then
@@ -125,15 +147,26 @@ When authoring or updating tests:
 - Run tests via terminal and self-heal any failures before concluding.
 - Reference: AGENTS.md and .agents/skills/test-architect/SKILL.md
 EOF
-  INSTALLED_AGENTS+=("Claude Code (CLAUDE.md)")
+fi
+ensure_reference "$TARGET_ROOT/CLAUDE.md"
+INSTALLED_AGENTS+=("Claude Code (CLAUDE.md)")
+
+if [ -d "$TARGET_ROOT/.clinerules" ]; then
+  ensure_reference "$TARGET_ROOT/.clinerules/test-architect.md"
+  INSTALLED_AGENTS+=("Cline (.clinerules/test-architect.md)")
+else
+  ensure_reference "$TARGET_ROOT/.clinerules"
+  INSTALLED_AGENTS+=("Cline (.clinerules)")
 fi
 
-if [ ! -f "$TARGET_ROOT/.clinerules" ]; then
-  cat << 'EOF' > "$TARGET_ROOT/.clinerules"
-# Cline / Roo Code Rules: Test Architect
-Follow the 5-Dimensional Test Matrix and Minimum Viable Mocking rules defined in AGENTS.md when writing test suites.
-EOF
-  INSTALLED_AGENTS+=("Cline / Roo Code (.clinerules)")
+# Use Roo's existing directory layout when present; otherwise use its fallback
+# file so creating a new directory does not suppress existing legacy rules.
+if [ -d "$TARGET_ROOT/.roo/rules" ]; then
+  ensure_reference "$TARGET_ROOT/.roo/rules/test-architect.md"
+  INSTALLED_AGENTS+=("Roo Code (.roo/rules/test-architect.md)")
+else
+  ensure_reference "$TARGET_ROOT/.roorules"
+  INSTALLED_AGENTS+=("Roo Code (.roorules)")
 fi
 
 if [ ! -f "$TARGET_ROOT/.windsurfrules" ]; then
@@ -141,8 +174,9 @@ if [ ! -f "$TARGET_ROOT/.windsurfrules" ]; then
 # Windsurf Rules: Test Architect
 Follow the 5-Dimensional Test Matrix and Minimum Viable Mocking rules defined in AGENTS.md when writing test suites.
 EOF
-  INSTALLED_AGENTS+=("Windsurf (.windsurfrules)")
 fi
+ensure_reference "$TARGET_ROOT/.windsurfrules"
+INSTALLED_AGENTS+=("Windsurf (.windsurfrules)")
 
 echo "Installation Complete! Configured for:"
 for agent in "${INSTALLED_AGENTS[@]}"; do

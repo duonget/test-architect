@@ -9,12 +9,25 @@ CWD="${1:-.}"
 detect_runner() {
   # 1. Check Node.js / TypeScript Projects
   if [ -f "$CWD/package.json" ]; then
+    PM="npx"
+    TEST_EXEC="npm test"
+    if [ -f "$CWD/pnpm-lock.yaml" ]; then
+      PM="pnpm dlx"
+      TEST_EXEC="pnpm test"
+    elif [ -f "$CWD/yarn.lock" ]; then
+      PM="yarn"
+      TEST_EXEC="yarn test"
+    elif [ -f "$CWD/bun.lockb" ] || [ -f "$CWD/bun.lock" ]; then
+      PM="bunx"
+      TEST_EXEC="bun test"
+    fi
+
     # Check Vitest
     if grep -q '"vitest"' "$CWD/package.json" || [ -f "$CWD/vitest.config.ts" ] || [ -f "$CWD/vitest.config.js" ]; then
       echo "FRAMEWORK=vitest"
-      echo "RUN_ALL_CMD=npx vitest run"
-      echo "RUN_SINGLE_CMD=npx vitest run <file>"
-      echo "COVERAGE_CMD=npx vitest run --coverage"
+      echo "RUN_ALL_CMD=$PM vitest run"
+      echo "RUN_SINGLE_CMD=$PM vitest run <file>"
+      echo "COVERAGE_CMD=$PM vitest run --coverage"
       echo "FILE_EXTENSION=.test.ts"
       return 0
     fi
@@ -22,9 +35,9 @@ detect_runner() {
     # Check Jest
     if grep -q '"jest"' "$CWD/package.json" || [ -f "$CWD/jest.config.js" ] || [ -f "$CWD/jest.config.ts" ]; then
       echo "FRAMEWORK=jest"
-      echo "RUN_ALL_CMD=npx jest"
-      echo "RUN_SINGLE_CMD=npx jest <file>"
-      echo "COVERAGE_CMD=npx jest --coverage"
+      echo "RUN_ALL_CMD=$PM jest"
+      echo "RUN_SINGLE_CMD=$PM jest <file>"
+      echo "COVERAGE_CMD=$PM jest --coverage"
       echo "FILE_EXTENSION=.test.ts"
       return 0
     fi
@@ -39,11 +52,11 @@ detect_runner() {
       return 0
     fi
 
-    # Fallback to npm test
+    # Fallback to detected package manager test script
     echo "FRAMEWORK=npm-scripts"
-    echo "RUN_ALL_CMD=npm test"
-    echo "RUN_SINGLE_CMD=npm test -- <file>"
-    echo "COVERAGE_CMD=npm test -- --coverage"
+    echo "RUN_ALL_CMD=$TEST_EXEC"
+    echo "RUN_SINGLE_CMD=$TEST_EXEC -- <file>"
+    echo "COVERAGE_CMD=$TEST_EXEC -- --coverage"
     echo "FILE_EXTENSION=.test.js"
     return 0
   fi

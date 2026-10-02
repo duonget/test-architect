@@ -15,10 +15,10 @@ import re
 from pathlib import Path
 
 MUTATION_RULES = [
-    (r"\b>\b", ">=", "Invert strict inequality ( > to >= )"),
-    (r"\b<\b", "<=", "Invert strict inequality ( < to <= )"),
-    (r"\b===\b", "!==", "Invert strict equality ( === to !== )"),
-    (r"\b==\b", "!=", "Invert equality ( == to != )"),
+    (r"(?<![=<>!])>(?![=<>])", ">=", "Invert strict inequality ( > to >= )"),
+    (r"(?<![=<>!])<(?![=<>])", "<=", "Invert strict inequality ( < to <= )"),
+    (r"===", "!==", "Invert strict equality ( === to !== )"),
+    (r"(?<!=)==(?!=)", "!=", "Invert equality ( == to != )"),
     (r"\btrue\b", "false", "Flip boolean constant ( true to false )"),
     (r"\bfalse\b", "true", "Flip boolean constant ( false to true )"),
 ]
@@ -61,32 +61,42 @@ def main():
 
         print(f"[INFO] Testing up to {args.max_mutations} logic mutations in {target_path.name}...")
 
+        lines = content.splitlines(keepends=True)
+        mutated_lines = list(lines)
+
         for pattern, replacement, desc in MUTATION_RULES:
             if mutations_tested >= args.max_mutations:
                 break
 
-            matches = list(re.finditer(pattern, content))
-            if not matches:
-                continue
+            applied = False
+            for line_idx, line in enumerate(lines):
+                stripped = line.strip()
+                # Skip comments
+                if stripped.startswith("//") or stripped.startswith("#") or stripped.startswith("*") or stripped.startswith("/*"):
+                    continue
 
-            # Mutate first occurrence
-            match = matches[0]
-            start, end = match.span()
-            mutated_content = content[:start] + replacement + content[end:]
+                if re.search(pattern, line):
+                    mutated_line = re.sub(pattern, replacement, line, count=1)
+                    mutated_lines[line_idx] = mutated_line
+                    mutated_content = "".join(mutated_lines)
+                    target_path.write_text(mutated_content, encoding="utf-8")
+                    mutations_tested += 1
+                    applied = True
 
-            target_path.write_text(mutated_content, encoding="utf-8")
-            mutations_tested += 1
+                    # Run test on mutated code
+                    passed = run_test(args.test)
+                    if passed:
+                        survived_count += 1
+                        print(f"  [SURVIVED] MUTATION SURVIVED: {desc} (line {line_idx + 1})")
+                        print(f"      Tests still PASSED despite changing logic! Your test suite may lack edge-case coverage.")
+                    else:
+                        killed_count += 1
+                        print(f"  [KILLED] MUTATION KILLED: {desc} (line {line_idx + 1})")
+                        print(f"      Tests correctly FAILED when logic was altered. Strong assertion detected!")
 
-            # Run test on mutated code
-            passed = run_test(args.test)
-            if passed:
-                survived_count += 1
-                print(f"  [SURVIVED] MUTATION SURVIVED: {desc}")
-                print(f"      Tests still PASSED despite changing logic! Your test suite may lack edge-case coverage.")
-            else:
-                killed_count += 1
-                print(f"  [KILLED] MUTATION KILLED: {desc}")
-                print(f"      Tests correctly FAILED when logic was altered. Strong assertion detected!")
+                    # Reset line back for next mutation rule
+                    mutated_lines[line_idx] = line
+                    break
 
         print("\n" + "=" * 55)
         print(f"Mutation Sanity Summary: {killed_count} Killed, {survived_count} Survived.")

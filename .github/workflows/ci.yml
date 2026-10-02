@@ -42,6 +42,10 @@ jobs:
         run: |
           python3 scripts/mutation-check.py --help
 
+      - name: Run Self-Audit Dogfooding Test Suite
+        run: |
+          python3 tests/test_dogfood.py -v
+
       - name: Verify Universal Installer
         run: |
           mkdir -p test-sandbox

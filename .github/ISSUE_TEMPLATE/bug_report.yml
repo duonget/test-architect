@@ -1,4 +1,4 @@
-name: 🐛 Bug Report
+name: Bug Report
 description: Report a bug, broken heuristic, or runner detection failure in Test Architect.
 labels: ["bug", "triage"]
 body:

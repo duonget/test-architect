@@ -43,11 +43,11 @@ def main():
         print(f"Error: Target file '{args.target}' does not exist.")
         sys.exit(1)
 
-    print(f"🛡️  [Test Architect] Running baseline test before mutation...")
+    print(f"[Test Architect] Running baseline test before mutation...")
     if not run_test(args.test):
-        print(f"❌ Baseline test failed! Fix existing tests before running mutation sanity check.")
+        print(f"[ERROR] Baseline test failed! Fix existing tests before running mutation sanity check.")
         sys.exit(1)
-    print(f"✓ Baseline tests PASS cleanly.\n")
+    print(f"[PASS] Baseline tests PASS cleanly.\n")
 
     # Create backup
     backup_path = target_path.with_suffix(target_path.suffix + ".bak")
@@ -59,7 +59,7 @@ def main():
         survived_count = 0
         killed_count = 0
 
-        print(f"🔬 Testing up to {args.max_mutations} logic mutations in {target_path.name}...")
+        print(f"[INFO] Testing up to {args.max_mutations} logic mutations in {target_path.name}...")
 
         for pattern, replacement, desc in MUTATION_RULES:
             if mutations_tested >= args.max_mutations:
@@ -81,19 +81,19 @@ def main():
             passed = run_test(args.test)
             if passed:
                 survived_count += 1
-                print(f"  ⚠️  MUTATION SURVIVED: {desc}")
+                print(f"  [SURVIVED] MUTATION SURVIVED: {desc}")
                 print(f"      Tests still PASSED despite changing logic! Your test suite may lack edge-case coverage.")
             else:
                 killed_count += 1
-                print(f"  ✓  MUTATION KILLED: {desc}")
+                print(f"  [KILLED] MUTATION KILLED: {desc}")
                 print(f"      Tests correctly FAILED when logic was altered. Strong assertion detected!")
 
         print("\n" + "=" * 55)
         print(f"Mutation Sanity Summary: {killed_count} Killed, {survived_count} Survived.")
         if survived_count > 0:
-            print("⚠️  Action required: Add assertions covering the survived boundary conditions.")
+            print("[WARN] Action required: Add assertions covering the survived boundary conditions.")
         else:
-            print("🎉 Excellent! Your test suite successfully caught all injected logic mutations.")
+            print("[SUCCESS] Excellent! Your test suite successfully caught all injected logic mutations.")
         print("=" * 55 + "\n")
 
     finally:

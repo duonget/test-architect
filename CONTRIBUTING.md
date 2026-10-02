@@ -1,10 +1,10 @@
-# Contributing to Test Architect 🏛️
+# Contributing to Test Architect
 
 Thank you for your interest in contributing to **Test Architect**! Our goal is to make AI Coding Agents worldwide write reliable, bulletproof tests instead of shallow, over-mocked tests.
 
 ---
 
-## ⚡ How to Add a New Framework Template (15-Minute Guide)
+## How to Add a New Framework Template (15-Minute Guide)
 
 We are actively expanding our language and framework coverage (e.g. C# .NET, Kotlin, Swift, Elixir, PHP Pest, Ruby RSpec).
 
@@ -35,13 +35,13 @@ Create `templates/<language>-<framework>.<ext>` demonstrating:
 
 ---
 
-## 📜 Development Conventions
+## Development Conventions
 
 - **POSIX Portability**: All `.sh` scripts must remain POSIX-compliant (`set -euo pipefail`) and avoid non-standard bashisms so they run cleanly on Alpine Linux, macOS, and Ubuntu.
 - **Zero Heavy Dependencies**: Helper scripts should remain zero-dependency (relying only on standard tools like Python 3 standard library and Bash).
 
 ---
 
-## 💬 Community & Discussions
+## Community & Discussions
 
 Have questions or ideas? Open an issue or join our GitHub Discussions!

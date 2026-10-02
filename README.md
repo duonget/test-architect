@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">🏛️ Test Architect</h1>
+  <h1 align="center">Test Architect</h1>
   <p align="center">
     <strong>The Open-Source Quality Engineering Skill for AI Coding Agents.</strong><br>
     <em>Stop AI agents from writing shallow "happy path" tests and mocking away your bugs.</em>
@@ -15,26 +15,26 @@
 
 ---
 
-## 💥 The "AI Testing Pandemic"
+## The "AI Testing Pandemic"
 
 During rapid AI coding and "vibe coding" sessions (with Cursor, Claude Code, Antigravity, or Copilot), developers generate production code at 10x speed. But when asked to *"write tests"*, AI models exhibit a dangerous **false sense of security**:
 
 ```
-❌ The Naive AI Testing Trap:
+The Naive AI Testing Trap:
    • 1 single "Happy Path" test case.
    • Mocks out internal classes and domain logic until the test passes.
    • Ignores edge-cases, nullability, negative numbers, and race conditions.
    • Generates tautological assertions like `expect(true).toBe(true)` to fool CI.
-   👉 Result: 100% test pass rate in CI, but immediate crash in production.
+   Result: 100% test pass rate in CI, but immediate crash in production.
 ```
 
 **Test Architect** solves this permanently. It is an **Agent-Native Skill** that equips any coding agent with the discipline, heuristics, and execution loop of a **Senior Test Architect**.
 
 ---
 
-## ⚔️ The Showdown: Naive AI vs. Test Architect
+## The Showdown: Naive AI vs. Test Architect
 
-| Dimension | 🤖 Naive AI Agent (Default Behavior) | 🏛️ AI Agent + Test Architect Skill |
+| Dimension | Naive AI Agent (Default Behavior) | AI Agent + Test Architect Skill |
 | :--- | :--- | :--- |
 | **Test Matrix** | Writes 1 arbitrary happy-path test | Enforces **5-D Matrix**: Happy, Boundary, Null, Failure, Concurrency |
 | **Mocking Discipline** | Mocks everything (helpers, DB, domain logic) | **Minimum Viable Mocking (MVM)**: Mocks only external network/DB |
@@ -44,7 +44,7 @@ During rapid AI coding and "vibe coding" sessions (with Cursor, Claude Code, Ant
 
 ---
 
-## ⚡ 1-Minute Universal Quickstart
+## 1-Minute Universal Quickstart
 
 Install Test Architect into your current repository with a single command:
 
@@ -66,12 +66,12 @@ Now, simply prompt your agent:
 
 ---
 
-## 🖥️ Live Terminal Simulation
+## Live Terminal Simulation
 
 ```text
 User: "Write unit tests for payment.ts using test-architect"
 
-🏛️ [Test Architect Agent Activated]
+[Test Architect Agent Activated]
 ├── Phase 1: Discovered Test Runner -> Vitest (v2.1)
 ├── Phase 2: Formulated 5-Dimensional Test Matrix (11 Test Cases):
 │   ├── Happy Path: TC-01 (USD valid charge), TC-02 (EUR/VND currencies)
@@ -82,16 +82,16 @@ User: "Write unit tests for payment.ts using test-architect"
 ├── Phase 3: Authored payment.test.ts (Strict AAA + MVM)
 ├── Phase 4: Autonomous Run & Self-Healing Loop:
 │   └── Running: npx vitest run src/services/payment.test.ts
-│   └── Result: 11 passed (100% GREEN ✓)
+│   └── Result: 11 passed (100% GREEN)
 └── Phase 5: Mutation Sanity Check:
-    └── Inverted `amountCents <= 0` to `< 0` -> Tests FAILED (Mutation Killed ✓)
-    └── Inverted `amountCents > 1000000` to `>=` -> Tests FAILED (Mutation Killed ✓)
-🎉 All 11 tests verified bulletproof. Ready to commit!
+    └── Inverted `amountCents <= 0` to `< 0` -> Tests FAILED (Mutation Killed)
+    └── Inverted `amountCents > 1000000` to `>=` -> Tests FAILED (Mutation Killed)
+All 11 tests verified bulletproof. Ready to commit!
 ```
 
 ---
 
-## 🏛️ The 5 Golden Disciplines
+## The 5 Golden Disciplines
 
 ```
               [ Target Function / Module ]
@@ -128,7 +128,7 @@ User: "Write unit tests for payment.ts using test-architect"
 
 ---
 
-## 🔬 Mutation Sanity Check in Action
+## Mutation Sanity Check in Action
 
 To prove tests are not "fake", Test Architect includes a zero-dependency Python script (`scripts/mutation-check.py`) that temporarily inverts comparison operators (`>` to `>=`, `==` to `!=`):
 
@@ -139,24 +139,24 @@ python3 scripts/mutation-check.py \
 ```
 
 ```text
-🛡️  [Test Architect] Running baseline test before mutation...
-✓ Baseline tests PASS cleanly.
+[Test Architect] Running baseline test before mutation...
+[PASS] Baseline tests PASS cleanly.
 
-🔬 Testing up to 3 logic mutations in payment.ts...
-  ✓  MUTATION KILLED: Invert strict inequality ( > to >= )
+[INFO] Testing up to 3 logic mutations in payment.ts...
+  [KILLED] MUTATION KILLED: Invert strict inequality ( > to >= )
       Tests correctly FAILED when logic was altered. Strong assertion detected!
-  ✓  MUTATION KILLED: Invert equality ( == to != )
+  [KILLED] MUTATION KILLED: Invert equality ( == to != )
       Tests correctly FAILED when logic was altered. Strong assertion detected!
 
 =======================================================
 Mutation Sanity Summary: 2 Killed, 0 Survived.
-🎉 Excellent! Your test suite successfully caught all injected logic mutations.
+[SUCCESS] Excellent! Your test suite successfully caught all injected logic mutations.
 =======================================================
 ```
 
 ---
 
-## 🌐 Agent Compatibility Matrix
+## Agent Compatibility Matrix
 
 | AI Platform | Integration Method | Configuration File |
 | :--- | :--- | :--- |
@@ -170,7 +170,7 @@ Mutation Sanity Summary: 2 Killed, 0 Survived.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome community contributions! You can help expand Test Architect by:
 1. Adding new language templates (`templates/`) for C# .NET, Kotlin, Rust, Elixir, PHP Pest.
@@ -181,6 +181,6 @@ Check out our [Contributing Guide](CONTRIBUTING.md) to get started in 15 minutes
 
 ---
 
-## 📄 License
+## License
 
 [MIT License](./LICENSE) © 2025-2026 Test Architect Contributors.

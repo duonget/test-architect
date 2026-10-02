@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_ROOT="${1:-.}"
 
 echo ""
-echo "🏛️  Test Architect: Universal Agent Skill Installer"
+echo "Test Architect: Universal Agent Skill Installer"
 echo "========================================================"
 echo "Inspecting target repository: $TARGET_ROOT"
 echo ""
@@ -103,12 +103,12 @@ EOF
   INSTALLED_AGENTS+=("Windsurf (.windsurfrules)")
 fi
 
-echo "🎉 Installation Complete! Configured for:"
+echo "Installation Complete! Configured for:"
 for agent in "${INSTALLED_AGENTS[@]}"; do
-  echo "  ✓ $agent"
+  echo "  + $agent"
 done
 
 echo ""
-echo "🚀 Ready to use! Simply prompt your agent:"
+echo "Ready to use! Simply prompt your agent:"
 echo "   'Write tests for <filename> using test-architect'"
 echo ""

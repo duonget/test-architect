@@ -15,7 +15,7 @@ AI agents notoriously generate shallow "happy path" tests and mock away real log
 
 ---
 
-## 🏛️ The 5 Golden Disciplines
+## The 5 Golden Disciplines
 
 ### 1. The 5-Dimensional Test Matrix
 Never write code tests directly from intuition. You must first construct an explicit **Test Matrix** covering:
@@ -43,7 +43,7 @@ Always run tests directly in the terminal, observe output, diagnose failures, an
 
 ---
 
-## 🔄 Step-by-Step Execution Workflow
+## Step-by-Step Execution Workflow
 
 ```
 [Target Function / Module]

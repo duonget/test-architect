@@ -1,0 +1,17 @@
+{
+  "pricing": [
+    {"id": "discount-threshold", "before": "subtotal >= 10_000", "after": "subtotal > 10_000"},
+    {"id": "rounding-floor", "before": "subtotal * 90 + 50", "after": "subtotal * 90"},
+    {"id": "shipping-threshold", "before": "subtotal >= 5_000", "after": "subtotal > 5_000"}
+  ],
+  "payment": [
+    {"id": "duplicate-charge", "before": "return await asyncio.shield(task)", "after": "return await self.gateway.charge(key, amount)"},
+    {"id": "ignore-conflict", "before": "previous_amount != amount", "after": "False"},
+    {"id": "cache-failure", "before": "self.operations.pop(key, None)", "after": "pass"}
+  ],
+  "pagination": [
+    {"id": "empty-page-stop", "before": "if cursor is None:", "after": "if cursor is None or not page[\"items\"]:"},
+    {"id": "duplicate-records", "before": "if item[\"id\"] not in seen_ids:", "after": "if True:"},
+    {"id": "partial-success", "before": "page = fetch(cursor)", "after": "try:\n            page = fetch(cursor)\n        except OSError:\n            return result"}
+  ]
+}

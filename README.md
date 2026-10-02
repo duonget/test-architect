@@ -6,7 +6,7 @@
   </p>
   <p align="center">
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
-    <img src="https://img.shields.io/badge/Agent-Antigravity%20|%20Cursor%20|%20Claude%20Code%20|%20Copilot%20|%20Windsurf-blue.svg" alt="Compatibility" />
+    <img src="https://img.shields.io/badge/Agent-Codex%20|%20OpenCode%20|%20Antigravity%20|%20Cursor%20|%20Claude%20Code%20|%20Copilot%20|%20Windsurf-blue.svg" alt="Codex, OpenCode, Antigravity, Cursor, Claude Code, Copilot and Windsurf compatibility" />
     <img src="https://img.shields.io/badge/Languages-TypeScript%20|%20Python%20|%20Go%20|%20Rust-orange.svg" alt="Languages" />
     <a href="https://github.com/duonget/test-architect/actions/workflows/ci.yml"><img src="https://github.com/duonget/test-architect/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
     <a href="https://github.com/duonget/test-architect/pulls"><img src="https://img.shields.io/badge/PRs-welcome-purple.svg" alt="PRs Welcome" /></a>
@@ -20,7 +20,7 @@
 
 ## The "AI Testing Pandemic"
 
-During rapid AI coding and "vibe coding" sessions (with Cursor, Claude Code, Antigravity, or Copilot), developers generate production code at 10x speed. But when asked to *"write tests"*, AI models exhibit a dangerous **false sense of security**:
+During rapid AI coding sessions with Codex, OpenCode, Cursor, Claude Code, Antigravity or Copilot, test generation can create a **false sense of security**:
 
 ```
 The Naive AI Testing Trap:
@@ -31,7 +31,7 @@ The Naive AI Testing Trap:
    Result: 100% test pass rate in CI, but immediate crash in production.
 ```
 
-**Test Architect** solves this permanently. It is an **Agent-Native Skill** that equips any coding agent with the discipline, heuristics, and execution loop of a **Senior Test Architect**.
+**Test Architect** helps coding agents design tests that catch real bugs, not just pass. It combines testing instructions with lightweight verification tools; results depend on the agent, project and assertions produced.
 
 ---
 
@@ -56,6 +56,8 @@ curl -fsSL https://raw.githubusercontent.com/duonget/test-architect/main/install
 ```
 
 The installer downloads the repository payload when streamed and configures the supported integration files:
+- **OpenAI Codex**: `.agents/skills/test-architect/` + `AGENTS.md`
+- **OpenCode**: `.agents/skills/test-architect/` + `AGENTS.md`
 - **Google Antigravity**: `.agents/skills/test-architect/`
 - **Cursor**: `.cursor/rules/test-architect.mdc`
 - **Claude Code**: `CLAUDE.md`
@@ -66,6 +68,36 @@ The installer downloads the repository payload when streamed and configures the 
 
 Now, simply prompt your agent:
 > *"Write unit tests for `src/services/payment.ts` using the test-architect skill."*
+
+### OpenAI Codex
+
+Run the installer from your repository root, then open Codex CLI or the IDE extension
+in that repository. Use `/skills` to find the skill, or invoke it explicitly:
+
+```text
+$test-architect Write tests for src/services/payment.ts
+```
+
+Codex discovers the shared `.agents/skills/test-architect/SKILL.md` and its adjacent
+scripts/templates. If the skill does not appear, restart Codex.
+
+### OpenCode
+
+Run the same installer from your repository root, then quit and restart OpenCode
+so the installed skill is loaded. Prompt:
+
+```text
+Load the test-architect skill and write tests for src/services/payment.ts.
+```
+
+OpenCode supports `.agents/skills/` natively, so no duplicate skill under
+`.opencode/skills/` or change to `opencode.json` is required. Existing skill permissions
+still apply; check them if the skill is hidden or denied.
+
+Both integrations share one installed payload. The installer does not modify
+`~/.codex/config.toml`, project/global OpenCode configuration, or agent permissions.
+Discovery paths are documented by [Codex](https://developers.openai.com/codex/skills)
+and [OpenCode](https://opencode.ai/docs/skills/).
 
 ---
 
@@ -133,6 +165,13 @@ All tests and mutation checks passed. Ready to commit!
 
 ## Mutation Sanity Check in Action
 
+This helper uses lexical mutations, not an AST or a complete mutation-testing engine.
+Use `--validate` to reject compile/type-invalid candidates. Without validation,
+a nonzero test exit can include compilation failures rather than assertion failures.
+It temporarily edits the target in place: run it sequentially, without other tests,
+editors or mutation jobs operating on that target. The benchmark evaluator below
+instead uses fresh temporary copies.
+
 To expose weak boundary assertions, Test Architect includes a zero-dependency Python script (`scripts/mutation-check.py`) that temporarily mutates executable comparisons and boolean constants. It restores the source after every run, fails when a mutant survives, and reports invalid mutations separately:
 
 ```bash
@@ -164,6 +203,8 @@ Mutation Summary: 2 Killed, 0 Survived, 0 Invalid.
 
 | AI Platform | Integration Method | Configuration File |
 | :--- | :--- | :--- |
+| **OpenAI Codex** | Native skill discovery + project instructions | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` |
+| **OpenCode** | Native skill discovery + project instructions | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` |
 | **Google Antigravity** | Native Skill System | `.agents/skills/test-architect/SKILL.md` |
 | **Cursor** | Cursor Rule (Project-level) | `.cursor/rules/test-architect.mdc` |
 | **Claude Code** | Agent Instruction Context | `CLAUDE.md` |
@@ -175,6 +216,18 @@ Mutation Summary: 2 Killed, 0 Survived, 0 Invalid.
 ---
 
 ## Contributing
+
+### Reproducible benchmark
+
+The [benchmark](benchmarks/README.md) includes three contract-based Python examples,
+nine seeded bugs and an isolated evaluator. Run the hand-written reference checks:
+
+```bash
+python3 benchmarks/evaluate.py --tests benchmarks/reference --require-all
+```
+
+These checks validate the fixtures, not AI effectiveness. The benchmark guide defines
+a controlled with/without-skill experiment; measured AI comparison results are not yet available.
 
 We welcome community contributions! You can help expand Test Architect by:
 1. Adding new language templates (`templates/`) for C# .NET, Kotlin, Rust, Elixir, PHP Pest.

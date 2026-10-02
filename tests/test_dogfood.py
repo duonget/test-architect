@@ -200,6 +200,50 @@ class TestArchitectSelfAudit(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn("baseline test did not pass (timeout)", result.stdout.lower())
 
+    def test_shared_codex_opencode_install_preserves_config_on_reinstall(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "project with spaces"
+            target.mkdir()
+            config = target / "opencode.json"
+            config.write_text('{"model":"provider/custom-model"}\n')
+            (target / ".codex").mkdir()
+            codex_config = target / ".codex/config.toml"
+            codex_config.write_text('model = "custom-model"\n')
+            (target / "AGENTS.md").write_text("# Project instructions\nKeep existing rules.\n")
+            for _ in range(2):
+                result = subprocess.run(
+                    ["bash", str(self.repo_root / "install.sh"), str(target)],
+                    capture_output=True, text=True, timeout=10, check=True,
+                )
+                self.assertIn("OpenAI Codex", result.stdout)
+                self.assertIn("OpenCode", result.stdout)
+            payload = target / ".agents/skills/test-architect"
+            for relative in ["SKILL.md", "scripts/detect-runner.sh", "scripts/mutation-check.py",
+                             "templates/python-pytest.py", "templates/typescript-vitest.ts"]:
+                self.assertEqual((payload / relative).read_bytes(), (self.repo_root / relative).read_bytes())
+            self.assertEqual(config.read_text(), '{"model":"provider/custom-model"}\n')
+            self.assertEqual(codex_config.read_text(), 'model = "custom-model"\n')
+            instructions = (target / "AGENTS.md").read_text()
+            self.assertTrue(instructions.startswith("# Project instructions\nKeep existing rules.\n"))
+            self.assertEqual(instructions.count("# AGENTS.md: Machine-Readable Context"), 1)
+
+    def test_incomplete_payload_does_not_create_target(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            source = root / "incomplete"
+            source.mkdir()
+            (source / "SKILL.md").write_text("incomplete payload")
+            target = root / "target"
+            environment = os.environ.copy()
+            environment["TEST_ARCHITECT_SOURCE_DIR"] = str(source)
+            result = subprocess.run(
+                ["bash", str(self.repo_root / "install.sh"), str(target)],
+                env=environment, capture_output=True, text=True, timeout=10,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing 'AGENTS.md'", result.stderr)
+            self.assertFalse(target.exists())
+
     def test_streamed_installer_downloads_payload(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install.sh
 # Universal Installer for Test Architect Skill across AI Coding Agents
-# Supports: Antigravity, Cursor, Claude Code, GitHub Copilot, Windsurf, Cline / Roo Code.
+# Supports: Codex, OpenCode, Antigravity, Cursor, Claude Code, GitHub Copilot, Windsurf, Cline / Roo Code.
 
 set -euo pipefail
 
@@ -56,7 +56,7 @@ echo ""
 
 INSTALLED_AGENTS=()
 
-# 1. Antigravity Skill Integration (.agents/skills/)
+# 1. Shared native skill discovery for Codex, OpenCode and Antigravity.
 mkdir -p "$TARGET_ROOT/.agents/skills/$SKILL_NAME/scripts"
 mkdir -p "$TARGET_ROOT/.agents/skills/$SKILL_NAME/templates"
 cp "$SCRIPT_DIR/SKILL.md" "$TARGET_ROOT/.agents/skills/$SKILL_NAME/SKILL.md"
@@ -64,6 +64,8 @@ cp -r "$SCRIPT_DIR/scripts/"* "$TARGET_ROOT/.agents/skills/$SKILL_NAME/scripts/"
 cp -r "$SCRIPT_DIR/templates/"* "$TARGET_ROOT/.agents/skills/$SKILL_NAME/templates/"
 chmod +x "$TARGET_ROOT/.agents/skills/$SKILL_NAME/scripts/"*.sh "$TARGET_ROOT/.agents/skills/$SKILL_NAME/scripts/"*.py 2>/dev/null || true
 INSTALLED_AGENTS+=("Google Antigravity (.agents/skills/$SKILL_NAME)")
+INSTALLED_AGENTS+=("OpenAI Codex (.agents/skills/$SKILL_NAME)")
+INSTALLED_AGENTS+=("OpenCode (.agents/skills/$SKILL_NAME)")
 
 # 2. Universal AGENTS.md
 if [ ! -f "$TARGET_ROOT/AGENTS.md" ]; then
@@ -150,4 +152,7 @@ done
 echo ""
 echo "Ready to use! Simply prompt your agent:"
 echo "   'Write tests for <filename> using test-architect'"
+echo 'Codex: $test-architect Write tests for <filename>'
+echo 'OpenCode: Load the test-architect skill and write tests for <filename>.'
+echo 'Restart OpenCode after installation. If Codex does not show the skill, restart Codex.'
 echo ""

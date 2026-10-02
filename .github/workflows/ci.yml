@@ -48,6 +48,9 @@ jobs:
       - name: Type-check TypeScript example
         run: npm run typecheck
 
+      - name: Verify benchmark reference tests catch seeded bugs
+        run: python3 benchmarks/evaluate.py --tests benchmarks/reference --require-all
+
       - name: Run TypeScript example suite
         run: npm test
 

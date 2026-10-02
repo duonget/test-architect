@@ -1,6 +1,6 @@
 # AGENTS.md: Machine-Readable Context for AI Coding Agents
 
-> This file defines the operational guidelines, persona constraints, and automated execution workflows for AI Coding Agents (Antigravity, Claude Code, Cursor, GitHub Copilot, Windsurf, Cline/Roo Code).
+> This file defines the operational guidelines, persona constraints, and automated execution workflows for AI Coding Agents (OpenAI Codex, OpenCode, Antigravity, Claude Code, Cursor, GitHub Copilot, Windsurf, Cline/Roo Code).
 
 ---
 

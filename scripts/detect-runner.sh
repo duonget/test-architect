@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# detect-runner.sh
+# Detects the testing framework and runner commands in the current project repository.
+
+set -euo pipefail
+
+CWD="${1:-.}"
+
+detect_runner() {
+  # 1. Check Node.js / TypeScript Projects
+  if [ -f "$CWD/package.json" ]; then
+    # Check Vitest
+    if grep -q '"vitest"' "$CWD/package.json" || [ -f "$CWD/vitest.config.ts" ] || [ -f "$CWD/vitest.config.js" ]; then
+      echo "FRAMEWORK=vitest"
+      echo "RUN_ALL_CMD=npx vitest run"
+      echo "RUN_SINGLE_CMD=npx vitest run <file>"
+      echo "COVERAGE_CMD=npx vitest run --coverage"
+      echo "FILE_EXTENSION=.test.ts"
+      return 0
+    fi
+
+    # Check Jest
+    if grep -q '"jest"' "$CWD/package.json" || [ -f "$CWD/jest.config.js" ] || [ -f "$CWD/jest.config.ts" ]; then
+      echo "FRAMEWORK=jest"
+      echo "RUN_ALL_CMD=npx jest"
+      echo "RUN_SINGLE_CMD=npx jest <file>"
+      echo "COVERAGE_CMD=npx jest --coverage"
+      echo "FILE_EXTENSION=.test.ts"
+      return 0
+    fi
+
+    # Check Bun test
+    if [ -f "$CWD/bun.lockb" ] || [ -f "$CWD/bun.lock" ]; then
+      echo "FRAMEWORK=bun"
+      echo "RUN_ALL_CMD=bun test"
+      echo "RUN_SINGLE_CMD=bun test <file>"
+      echo "COVERAGE_CMD=bun test --coverage"
+      echo "FILE_EXTENSION=.test.ts"
+      return 0
+    fi
+
+    # Fallback to npm test
+    echo "FRAMEWORK=npm-scripts"
+    echo "RUN_ALL_CMD=npm test"
+    echo "RUN_SINGLE_CMD=npm test -- <file>"
+    echo "COVERAGE_CMD=npm test -- --coverage"
+    echo "FILE_EXTENSION=.test.js"
+    return 0
+  fi
+
+  # 2. Check Python Projects
+  if [ -f "$CWD/pytest.ini" ] || [ -f "$CWD/pyproject.toml" ] || [ -f "$CWD/setup.cfg" ] || [ -d "$CWD/tests" ]; then
+    echo "FRAMEWORK=pytest"
+    echo "RUN_ALL_CMD=pytest -v"
+    echo "RUN_SINGLE_CMD=pytest -v <file>"
+    echo "COVERAGE_CMD=pytest --cov=. tests/"
+    echo "FILE_EXTENSION=_test.py"
+    return 0
+  fi
+
+  # 3. Check Go Projects
+  if [ -f "$CWD/go.mod" ]; then
+    echo "FRAMEWORK=gotest"
+    echo "RUN_ALL_CMD=go test -v ./..."
+    echo "RUN_SINGLE_CMD=go test -v <file>"
+    echo "COVERAGE_CMD=go test -coverprofile=coverage.out ./..."
+    echo "FILE_EXTENSION=_test.go"
+    return 0
+  fi
+
+  # 4. Check Rust Projects
+  if [ -f "$CWD/Cargo.toml" ]; then
+    echo "FRAMEWORK=cargo-test"
+    echo "RUN_ALL_CMD=cargo test"
+    echo "RUN_SINGLE_CMD=cargo test --test <name>"
+    echo "COVERAGE_CMD=cargo tarpaulin"
+    echo "FILE_EXTENSION=.rs"
+    return 0
+  fi
+
+  echo "FRAMEWORK=unknown"
+  echo "RUN_ALL_CMD=unknown"
+  echo "RUN_SINGLE_CMD=unknown"
+  return 1
+}
+
+detect_runner

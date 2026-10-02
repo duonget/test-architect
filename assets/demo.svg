@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 480" width="820" height="480">
+  <defs>
+    <style>
+      .bg { fill: #12131a; rx: 10px; }
+      .bar { fill: #1c1d29; }
+      .dot-red { fill: #ff5f56; }
+      .dot-yellow { fill: #ffbd2e; }
+      .dot-green { fill: #27c93f; }
+      .bar-title { fill: #7a829e; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12px; font-weight: 500; }
+      .txt { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 13px; fill: #d8dee9; line-height: 1.5; }
+      .cmd { fill: #88c0d0; font-weight: bold; }
+      .prompt-sign { fill: #81a1c1; }
+      .tag-info { fill: #88c0d0; }
+      .tag-pass { fill: #a3be8c; font-weight: bold; }
+      .tag-killed { fill: #b48ead; font-weight: bold; }
+      .tag-success { fill: #a3be8c; font-weight: bold; }
+      .dim { fill: #636b82; }
+      .cursor { fill: #eceff4; animation: blink 0.8s infinite; }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+
+      /* Staggered step fade-in animation loop (14s total cycle) */
+      @keyframes seq1 { 0% { opacity: 0; } 3% { opacity: 1; } 95% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes seq2 { 0%, 8% { opacity: 0; } 12% { opacity: 1; } 95% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes seq3 { 0%, 20% { opacity: 0; } 25% { opacity: 1; } 95% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes seq4 { 0%, 35% { opacity: 0; } 40% { opacity: 1; } 95% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes seq5 { 0%, 55% { opacity: 0; } 60% { opacity: 1; } 95% { opacity: 1; } 100% { opacity: 0; } }
+      @keyframes seq6 { 0%, 75% { opacity: 0; } 80% { opacity: 1; } 95% { opacity: 1; } 100% { opacity: 0; } }
+
+      .step-1 { animation: seq1 14s infinite; }
+      .step-2 { animation: seq2 14s infinite; }
+      .step-3 { animation: seq3 14s infinite; }
+      .step-4 { animation: seq4 14s infinite; }
+      .step-5 { animation: seq5 14s infinite; }
+      .step-6 { animation: seq6 14s infinite; }
+    </style>
+  </defs>
+
+  <!-- Terminal Window Background -->
+  <rect width="820" height="480" class="bg" />
+
+  <!-- Window Header Bar -->
+  <path d="M 0,10 Q 0,0 10,0 L 810,0 Q 820,0 820,10 L 820,38 L 0,38 Z" class="bar" />
+  <circle cx="20" cy="19" r="6" class="dot-red" />
+  <circle cx="38" cy="19" r="6" class="dot-yellow" />
+  <circle cx="56" cy="19" r="6" class="dot-green" />
+  <text x="410" y="24" text-anchor="middle" class="bar-title">duonget@macbook: ~/project (test-architect)</text>
+
+  <!-- Step 1: 1-line installation -->
+  <g class="txt step-1" transform="translate(25, 68)">
+    <text x="0" y="0"><tspan class="prompt-sign">$ </tspan><tspan class="cmd">curl -fsSL https://raw.githubusercontent.com/duonget/test-architect/main/install.sh | bash</tspan></text>
+  </g>
+
+  <!-- Step 2: Installer output -->
+  <g class="txt step-2" transform="translate(25, 96)">
+    <text x="0" y="0"><tspan class="tag-info">[INFO]</tspan> Installed skill across: Antigravity, Cursor, Claude Code, Copilot, Cline</text>
+    <text x="0" y="22" class="tag-pass">[PASS] Universal AGENTS.md and .cursor/rules configured successfully.</text>
+  </g>
+
+  <!-- Step 3: Prompting the Agent -->
+  <g class="txt step-3" transform="translate(25, 150)">
+    <text x="0" y="0"><tspan class="prompt-sign">&gt; </tspan><tspan class="cmd">agent "Write unit tests for src/services/payment.ts using test-architect"</tspan></text>
+  </g>
+
+  <!-- Step 4: Test Architect Activation & Matrix -->
+  <g class="txt step-4" transform="translate(25, 185)">
+    <text x="0" y="0" class="tag-info">[Test Architect Activated]</text>
+    <text x="0" y="22" class="dim">├── Phase 1: Discovered Test Runner -&gt; Vitest (v2.1)</text>
+    <text x="0" y="44" class="dim">├── Phase 2: Formulated 5-D Matrix (Happy, Boundary, Null, Failure, Concurrency)</text>
+    <text x="0" y="66" class="dim">├── Phase 3: Authored payment.test.ts (Strict AAA + Minimum Viable Mocking)</text>
+  </g>
+
+  <!-- Step 5: Autonomous Execution & Mutation -->
+  <g class="txt step-5" transform="translate(25, 280)">
+    <text x="0" y="0"><tspan class="dim">├── Phase 4: Autonomous Run -&gt; </tspan><tspan class="tag-pass">11 passed (100% GREEN)</tspan></text>
+    <text x="0" y="22"><tspan class="dim">├── Phase 5: Mutation Sanity Check -&gt; </tspan><tspan class="tag-killed">[KILLED]</tspan><tspan class="dim"> 2 injected mutants defeated</tspan></text>
+  </g>
+
+  <!-- Step 6: Success Completion & Cursor -->
+  <g class="txt step-6" transform="translate(25, 335)">
+    <text x="0" y="0" class="tag-success">[SUCCESS] All 11 tests verified bulletproof. Ready to commit!</text>
+    <text x="0" y="28"><tspan class="prompt-sign">$ </tspan><tspan class="cursor">█</tspan></text>
+  </g>
+</svg>

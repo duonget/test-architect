@@ -11,6 +11,9 @@
     <a href="https://github.com/duonget/test-architect/actions"><img src="https://img.shields.io/badge/CI-passing-brightgreen.svg" alt="CI Status" /></a>
     <a href="https://github.com/duonget/test-architect/pulls"><img src="https://img.shields.io/badge/PRs-welcome-purple.svg" alt="PRs Welcome" /></a>
   </p>
+  <p align="center">
+    <img src="./assets/demo.svg" alt="Test Architect Terminal Demo" width="820" />
+  </p>
 </p>
 
 ---

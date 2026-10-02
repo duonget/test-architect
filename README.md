@@ -8,8 +8,8 @@
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
     <img src="https://img.shields.io/badge/Agent-Antigravity%20|%20Cursor%20|%20Claude%20Code%20|%20Copilot%20|%20Windsurf-blue.svg" alt="Compatibility" />
     <img src="https://img.shields.io/badge/Languages-TypeScript%20|%20Python%20|%20Go%20|%20Rust-orange.svg" alt="Languages" />
-    <a href="https://github.com/your-username/test-architect/actions"><img src="https://img.shields.io/badge/CI-passing-brightgreen.svg" alt="CI Status" /></a>
-    <a href="https://github.com/your-username/test-architect/pulls"><img src="https://img.shields.io/badge/PRs-welcome-purple.svg" alt="PRs Welcome" /></a>
+    <a href="https://github.com/duonget/test-architect/actions"><img src="https://img.shields.io/badge/CI-passing-brightgreen.svg" alt="CI Status" /></a>
+    <a href="https://github.com/duonget/test-architect/pulls"><img src="https://img.shields.io/badge/PRs-welcome-purple.svg" alt="PRs Welcome" /></a>
   </p>
 </p>
 
@@ -49,7 +49,7 @@ The Naive AI Testing Trap:
 Install Test Architect into your current repository with a single command:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/your-username/test-architect/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/duonget/test-architect/main/install.sh | bash
 ```
 
 The installer automatically detects your IDE/Agent environment and configures the native integration files:

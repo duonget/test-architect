@@ -47,11 +47,11 @@ echo -e "├── Phase 2: Formulated 5-D Matrix (Happy, Boundary, Null, Failur
 sleep 0.4
 echo -e "├── Phase 3: Authored payment.test.ts (Strict AAA + Minimum Viable Mocking)"
 sleep 0.6
-echo -e "├── Phase 4: Autonomous Run -> ${GREEN}${BOLD}11 passed (100% GREEN)${RESET}"
+echo -e "├── Phase 4: Autonomous Run -> ${GREEN}${BOLD}24 passed (100% GREEN)${RESET}"
 sleep 0.5
 echo -e "├── Phase 5: Mutation Sanity Check -> ${MAGENTA}${BOLD}[KILLED]${RESET} 2 injected mutants defeated"
 sleep 0.5
 echo ""
-echo -e "${GREEN}${BOLD}[SUCCESS] All 11 tests verified bulletproof. Ready to commit!${RESET}"
+echo -e "${GREEN}${BOLD}[SUCCESS] All tests and mutation checks passed. Ready to commit!${RESET}"
 echo ""
 sleep 1

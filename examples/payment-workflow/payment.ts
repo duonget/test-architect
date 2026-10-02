@@ -13,21 +13,32 @@ export interface PaymentReceipt {
 }
 
 export interface PaymentGatewayClient {
-  charge(amountCents: number, currency: string, customerId: string): Promise<{ gatewayId: string }>;
+  charge(
+    amountCents: number,
+    currency: string,
+    customerId: string,
+    idempotencyKey: string,
+  ): Promise<{ gatewayId: string }>;
 }
 
 export class PaymentService {
-  private processedKeys = new Map<string, PaymentReceipt>();
+  private operations = new Map<
+    string,
+    { fingerprint: string; result: Promise<PaymentReceipt> }
+  >();
 
   constructor(private gateway: PaymentGatewayClient) {}
 
   async processPayment(req: PaymentRequest): Promise<PaymentReceipt> {
-    // 1. Validation & Boundaries
-    if (!req.idempotencyKey || req.idempotencyKey.trim().length === 0) {
+    if (!req || typeof req !== "object") {
+      throw new Error("InvalidPaymentRequest");
+    }
+
+    if (typeof req.idempotencyKey !== "string" || req.idempotencyKey.trim().length === 0) {
       throw new Error("MissingIdempotencyKey");
     }
 
-    if (req.amountCents <= 0) {
+    if (!Number.isSafeInteger(req.amountCents) || req.amountCents <= 0) {
       throw new Error("InvalidAmount: Must be greater than zero");
     }
 
@@ -35,26 +46,45 @@ export class PaymentService {
       throw new Error("AmountExceedsLimit: Maximum single charge is $10,000");
     }
 
-    if (!req.currency || !["USD", "EUR", "VND"].includes(req.currency.toUpperCase())) {
+    if (typeof req.currency !== "string" || !["USD", "EUR", "VND"].includes(req.currency.trim().toUpperCase())) {
       throw new Error(`UnsupportedCurrency: ${req.currency}`);
     }
 
-    // 2. Idempotency Check
-    if (this.processedKeys.has(req.idempotencyKey)) {
-      return this.processedKeys.get(req.idempotencyKey)!;
+    if (typeof req.customerId !== "string" || req.customerId.trim().length === 0) {
+      throw new Error("MissingCustomerId");
     }
 
-    // 3. Process Charge via External Gateway
-    const gatewayRes = await this.gateway.charge(req.amountCents, req.currency, req.customerId);
+    const idempotencyKey = req.idempotencyKey.trim();
+    const amountCents = req.amountCents;
+    const currency = req.currency.trim().toUpperCase();
+    const customerId = req.customerId.trim();
+    const fingerprint = JSON.stringify([amountCents, currency, customerId]);
+    const existing = this.operations.get(idempotencyKey);
 
-    const receipt: PaymentReceipt = {
-      transactionId: gatewayRes.gatewayId,
-      status: "SUCCESS",
-      amountCents: req.amountCents,
-      chargedAt: new Date()
-    };
+    if (existing) {
+      if (existing.fingerprint !== fingerprint) {
+        throw new Error("IdempotencyKeyConflict");
+      }
+      return existing.result;
+    }
 
-    this.processedKeys.set(req.idempotencyKey, receipt);
-    return receipt;
+    let result: Promise<PaymentReceipt>;
+    result = Promise.resolve()
+      .then(() => this.gateway.charge(amountCents, currency, customerId, idempotencyKey))
+      .then((gatewayRes): PaymentReceipt => ({
+        transactionId: gatewayRes.gatewayId,
+        status: "SUCCESS",
+        amountCents,
+        chargedAt: new Date(),
+      }))
+      .catch((error) => {
+        if (this.operations.get(idempotencyKey)?.result === result) {
+          this.operations.delete(idempotencyKey);
+        }
+        throw error;
+      });
+
+    this.operations.set(idempotencyKey, { fingerprint, result });
+    return result;
   }
 }

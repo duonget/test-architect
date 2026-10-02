@@ -1,116 +1,256 @@
 #!/usr/bin/env python3
-"""
-mutation-check.py
-Lightweight mutation sanity checker to expose tautological or weak test suites.
-
-Usage:
-  python3 scripts/mutation-check.py --target src/service.ts --test "npx vitest run src/service.test.ts"
-"""
+"""Lightweight mutation sanity checker for boundary and boolean assertions."""
 
 import argparse
+import os
+import re
+import shutil
+import signal
 import subprocess
 import sys
-import shutil
-import re
+import tempfile
+from dataclasses import dataclass
 from pathlib import Path
 
+
+EXIT_ERROR = 1
+EXIT_SURVIVED = 2
+EXIT_INVALID = 3
+
 MUTATION_RULES = [
-    (r"(?<![=<>!])>(?![=<>])", ">=", "Invert strict inequality ( > to >= )"),
-    (r"(?<![=<>!])<(?![=<>])", "<=", "Invert strict inequality ( < to <= )"),
+    (r"(?<![=<>!])<=(?!=)", "<", "Shift inclusive lower boundary ( <= to < )"),
+    (r"(?<![=<>!])>=(?!=)", ">", "Shift inclusive upper boundary ( >= to > )"),
+    (r"(?<![=<>!])>(?![=<>])", ">=", "Shift strict upper boundary ( > to >= )"),
+    (r"(?<![=<>!])<(?![=<>])", "<=", "Shift strict lower boundary ( < to <= )"),
+    (r"!==", "===", "Invert strict inequality ( !== to === )"),
     (r"===", "!==", "Invert strict equality ( === to !== )"),
-    (r"(?<!=)==(?!=)", "!=", "Invert equality ( == to != )"),
+    (r"(?<![!=])==(?!=)", "!=", "Invert equality ( == to != )"),
     (r"\btrue\b", "false", "Flip boolean constant ( true to false )"),
     (r"\bfalse\b", "true", "Flip boolean constant ( false to true )"),
+    (r"\bTrue\b", "False", "Flip boolean constant ( True to False )"),
+    (r"\bFalse\b", "True", "Flip boolean constant ( False to True )"),
 ]
 
-def run_test(cmd: str) -> bool:
-    """Run test command, return True if tests PASS, False if tests FAIL."""
-    try:
-        res = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return res.returncode == 0
-    except Exception:
-        return False
 
-def main():
+@dataclass
+class CommandResult:
+    status: str
+    returncode: int | None
+    output: str
+
+
+def run_command(cmd: str, timeout: float) -> CommandResult:
+    """Run a trusted project command with a hard timeout and captured output."""
+    process = subprocess.Popen(
+        cmd,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        output, _ = process.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGTERM)
+        try:
+            output, _ = process.communicate(timeout=2)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGKILL)
+            output, _ = process.communicate()
+        return CommandResult("timeout", None, output)
+
+    status = "passed" if process.returncode == 0 else "failed"
+    if process.returncode in (126, 127) or process.returncode < 0:
+        status = "error"
+    return CommandResult(status, process.returncode, output)
+
+
+def executable_code(line: str) -> str:
+    """Mask quoted text and inline comments before locating mutation sites."""
+    result = []
+    quote = None
+    escaped = False
+    index = 0
+
+    while index < len(line):
+        char = line[index]
+        next_char = line[index + 1] if index + 1 < len(line) else ""
+
+        if quote:
+            result.append(" ")
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+            index += 1
+            continue
+
+        if char in ('"', "'", "`"):
+            quote = char
+            result.append(" ")
+        elif char == "#" or (char == "/" and next_char == "/"):
+            result.extend(" " * (len(line) - index))
+            break
+        else:
+            result.append(char)
+        index += 1
+
+    return "".join(result)
+
+
+def is_executable_line(code: str) -> bool:
+    """Avoid declarations and prose where lexical operators are usually syntax."""
+    stripped = code.strip()
+    if not stripped or stripped.startswith(("/*", "*", "//", "#")):
+        return False
+    if re.fullmatch(r"[<>][\s\w{},;()[\]]*", stripped):
+        return False
+    if re.search(r"\b(Promise|Map|Set|Array|Record)<", stripped):
+        return False
+    declaration = re.match(
+        r"^(export\s+)?(interface|type|class|enum|import|from|package|func\s+\w+|def\s+\w+)\b",
+        stripped,
+    )
+    return declaration is None
+
+
+def find_candidates(content: str):
+    lines = content.splitlines(keepends=True)
+    for line_idx, line in enumerate(lines):
+        code = executable_code(line)
+        if not is_executable_line(code):
+            continue
+        for pattern, replacement, description in MUTATION_RULES:
+            match = re.search(pattern, code)
+            if match:
+                yield lines, line_idx, match.span(), replacement, description
+
+
+def print_diagnostics(result: CommandResult):
+    if result.output.strip():
+        print("      Command output:")
+        for line in result.output.strip().splitlines()[-8:]:
+            print(f"        {line}")
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(description="Test Architect Mutation Sanity Checker")
     parser.add_argument("--target", required=True, help="Path to source code file to mutate")
-    parser.add_argument("--test", required=True, help="Test command to run")
-    parser.add_argument("--max-mutations", type=int, default=3, help="Max mutations to test")
+    parser.add_argument("--test", required=True, help="Trusted shell command that runs the target tests")
+    parser.add_argument(
+        "--validate",
+        help="Optional trusted shell command that validates syntax/types before tests",
+    )
+    parser.add_argument("--max-mutations", type=int, default=3, help="Maximum valid mutations to test")
+    parser.add_argument("--timeout", type=float, default=120, help="Seconds allowed per command")
     args = parser.parse_args()
 
-    target_path = Path(args.target)
-    if not target_path.exists():
-        print(f"Error: Target file '{args.target}' does not exist.")
-        sys.exit(1)
+    target_path = Path(args.target).resolve()
+    if not target_path.is_file():
+        print(f"[ERROR] Target file '{args.target}' does not exist or is not a file.")
+        return EXIT_ERROR
+    if args.max_mutations < 1:
+        print("[ERROR] --max-mutations must be at least 1.")
+        return EXIT_ERROR
+    if args.timeout <= 0:
+        print("[ERROR] --timeout must be greater than zero.")
+        return EXIT_ERROR
 
-    print(f"[Test Architect] Running baseline test before mutation...")
-    if not run_test(args.test):
-        print(f"[ERROR] Baseline test failed! Fix existing tests before running mutation sanity check.")
-        sys.exit(1)
-    print(f"[PASS] Baseline tests PASS cleanly.\n")
-
-    # Create backup
-    backup_path = target_path.with_suffix(target_path.suffix + ".bak")
-    shutil.copy2(target_path, backup_path)
-
+    lock_path = target_path.with_name(f".{target_path.name}.mutation.lock")
     try:
-        content = backup_path.read_text(encoding="utf-8")
-        mutations_tested = 0
-        survived_count = 0
+        lock_fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError:
+        print(f"[ERROR] Another mutation check appears to be running for '{target_path}'.")
+        return EXIT_ERROR
+
+    backup_path = None
+    backup_complete = False
+    try:
+        print("[Test Architect] Running baseline test before mutation...")
+        baseline = run_command(args.test, args.timeout)
+        if baseline.status != "passed":
+            print(f"[ERROR] Baseline test did not pass ({baseline.status}).")
+            print_diagnostics(baseline)
+            return EXIT_ERROR
+        print("[PASS] Baseline tests pass cleanly.\n")
+
+        with tempfile.NamedTemporaryFile(
+            prefix=f"{target_path.name}.", suffix=".mutation-backup", delete=False
+        ) as backup:
+            backup_path = Path(backup.name)
+        shutil.copy2(target_path, backup_path)
+        backup_complete = True
+        original = backup_path.read_text(encoding="utf-8")
+
+        valid_count = 0
         killed_count = 0
+        survived_count = 0
+        invalid_count = 0
 
-        print(f"[INFO] Testing up to {args.max_mutations} logic mutations in {target_path.name}...")
-
-        lines = content.splitlines(keepends=True)
-        mutated_lines = list(lines)
-
-        for pattern, replacement, desc in MUTATION_RULES:
-            if mutations_tested >= args.max_mutations:
+        print(f"[INFO] Testing up to {args.max_mutations} valid mutations in {target_path.name}...")
+        for lines, line_idx, span, replacement, description in find_candidates(original):
+            if valid_count >= args.max_mutations:
                 break
 
-            applied = False
-            for line_idx, line in enumerate(lines):
-                stripped = line.strip()
-                # Skip comments
-                if stripped.startswith("//") or stripped.startswith("#") or stripped.startswith("*") or stripped.startswith("/*"):
+            start, end = span
+            mutated_lines = list(lines)
+            line = mutated_lines[line_idx]
+            mutated_lines[line_idx] = line[:start] + replacement + line[end:]
+            target_path.write_text("".join(mutated_lines), encoding="utf-8")
+
+            if args.validate:
+                validation = run_command(args.validate, args.timeout)
+                if validation.status != "passed":
+                    invalid_count += 1
+                    print(f"  [INVALID] {description} (line {line_idx + 1})")
+                    print_diagnostics(validation)
+                    target_path.write_text(original, encoding="utf-8")
                     continue
 
-                if re.search(pattern, line):
-                    mutated_line = re.sub(pattern, replacement, line, count=1)
-                    mutated_lines[line_idx] = mutated_line
-                    mutated_content = "".join(mutated_lines)
-                    target_path.write_text(mutated_content, encoding="utf-8")
-                    mutations_tested += 1
-                    applied = True
+            valid_count += 1
+            result = run_command(args.test, args.timeout)
+            target_path.write_text(original, encoding="utf-8")
 
-                    # Run test on mutated code
-                    passed = run_test(args.test)
-                    if passed:
-                        survived_count += 1
-                        print(f"  [SURVIVED] MUTATION SURVIVED: {desc} (line {line_idx + 1})")
-                        print(f"      Tests still PASSED despite changing logic! Your test suite may lack edge-case coverage.")
-                    else:
-                        killed_count += 1
-                        print(f"  [KILLED] MUTATION KILLED: {desc} (line {line_idx + 1})")
-                        print(f"      Tests correctly FAILED when logic was altered. Strong assertion detected!")
+            if result.status == "passed":
+                survived_count += 1
+                print(f"  [SURVIVED] {description} (line {line_idx + 1})")
+            elif result.status == "failed":
+                killed_count += 1
+                print(f"  [KILLED] {description} (line {line_idx + 1})")
+            else:
+                invalid_count += 1
+                valid_count -= 1
+                print(f"  [INVALID] Test command {result.status} for {description} (line {line_idx + 1})")
+                print_diagnostics(result)
 
-                    # Reset line back for next mutation rule
-                    mutated_lines[line_idx] = line
-                    break
-
-        print("\n" + "=" * 55)
-        print(f"Mutation Sanity Summary: {killed_count} Killed, {survived_count} Survived.")
-        if survived_count > 0:
-            print("[WARN] Action required: Add assertions covering the survived boundary conditions.")
-        else:
-            print("[SUCCESS] Excellent! Your test suite successfully caught all injected logic mutations.")
-        print("=" * 55 + "\n")
-
+        print("\n" + "=" * 60)
+        print(
+            f"Mutation Summary: {killed_count} Killed, {survived_count} Survived, "
+            f"{invalid_count} Invalid."
+        )
+        if valid_count == 0:
+            print("[ERROR] No valid mutation was tested; the result is inconclusive.")
+            return EXIT_INVALID if invalid_count else EXIT_ERROR
+        if survived_count:
+            print("[FAIL] Add assertions that cover the survived behavior changes.")
+            return EXIT_SURVIVED
+        if invalid_count:
+            print("[WARN] Invalid mutations were skipped; valid mutants still passed the gate.")
+        print("[SUCCESS] All valid mutations were killed by the test suite.")
+        return 0
     finally:
-        # Restore original file
-        if backup_path.exists():
-            shutil.copy2(backup_path, target_path)
-            backup_path.unlink()
+        try:
+            if backup_complete and backup_path and backup_path.exists():
+                shutil.copy2(backup_path, target_path)
+            if backup_path and backup_path.exists():
+                backup_path.unlink()
+        finally:
+            os.close(lock_fd)
+            lock_path.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

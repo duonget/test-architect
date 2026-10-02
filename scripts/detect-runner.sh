@@ -12,7 +12,7 @@ detect_runner() {
     PM="npx"
     TEST_EXEC="npm test"
     if [ -f "$CWD/pnpm-lock.yaml" ]; then
-      PM="pnpm dlx"
+      PM="pnpm exec"
       TEST_EXEC="pnpm test"
     elif [ -f "$CWD/yarn.lock" ]; then
       PM="yarn"
@@ -62,7 +62,22 @@ detect_runner() {
   fi
 
   # 2. Check Python Projects
-  if [ -f "$CWD/pytest.ini" ] || [ -f "$CWD/pyproject.toml" ] || [ -f "$CWD/setup.cfg" ] || [ -d "$CWD/tests" ]; then
+  PYTEST_DETECTED=false
+  if [ -f "$CWD/pytest.ini" ] \
+    || { [ -f "$CWD/pyproject.toml" ] && grep -Eq '\[tool\.pytest|pytest' "$CWD/pyproject.toml"; } \
+    || { [ -f "$CWD/setup.cfg" ] && grep -Eq '^\[tool:pytest\]' "$CWD/setup.cfg"; } \
+    || { [ -f "$CWD/tox.ini" ] && grep -Eq 'pytest|\[pytest\]' "$CWD/tox.ini"; } \
+    || { [ -d "$CWD/tests" ] && grep -REq '^[[:space:]]*(from[[:space:]]+pytest|import[[:space:]]+pytest)' "$CWD/tests"; }; then
+    PYTEST_DETECTED=true
+  fi
+  for dependency_file in "$CWD"/requirements*.txt; do
+    if [ -f "$dependency_file" ] && grep -Eq '^[[:space:]]*pytest([<=>~![:space:]]|$)' "$dependency_file"; then
+      PYTEST_DETECTED=true
+      break
+    fi
+  done
+
+  if [ "$PYTEST_DETECTED" = true ]; then
     echo "FRAMEWORK=pytest"
     echo "RUN_ALL_CMD=pytest -v"
     echo "RUN_SINGLE_CMD=pytest -v <file>"
@@ -75,7 +90,7 @@ detect_runner() {
   if [ -f "$CWD/go.mod" ]; then
     echo "FRAMEWORK=gotest"
     echo "RUN_ALL_CMD=go test -v ./..."
-    echo "RUN_SINGLE_CMD=go test -v <file>"
+    echo "RUN_SINGLE_CMD=go test -v <package> -run '<test-name>'"
     echo "COVERAGE_CMD=go test -coverprofile=coverage.out ./..."
     echo "FILE_EXTENSION=_test.go"
     return 0

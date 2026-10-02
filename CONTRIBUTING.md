@@ -27,17 +27,20 @@ Create `templates/<language>-<framework>.<ext>` demonstrating:
 2. Parameterized or table-driven test cases for boundary values.
 3. Minimal Viable Mocking (only mock external boundaries; never mock domain logic).
 4. Idiomatic error/exception assertion.
+5. A deterministic concurrency or idempotency scenario.
 
 ### Step 3: Test Locally & Open a PR
 1. Run `./scripts/detect-runner.sh <your-test-dir>` to ensure it identifies your project.
 2. Run `./install.sh <sandbox-dir>` to verify files copy properly.
-3. Submit a Pull Request using our [PR Template](.github/PULL_REQUEST_TEMPLATE.md).
+3. Run `python3 -m unittest discover -s tests -p 'test_*.py' -v`.
+4. Run `npm ci && npm run typecheck && npm test` for the executable TypeScript example.
+5. Submit a Pull Request using our [PR Template](.github/PULL_REQUEST_TEMPLATE.md).
 
 ---
 
 ## Development Conventions
 
-- **POSIX Portability**: All `.sh` scripts must remain POSIX-compliant (`set -euo pipefail`) and avoid non-standard bashisms so they run cleanly on Alpine Linux, macOS, and Ubuntu.
+- **Bash Portability**: Shell scripts target Bash 3.2+ and must run on macOS and Ubuntu. Alpine users need to install Bash explicitly.
 - **Zero Heavy Dependencies**: Helper scripts should remain zero-dependency (relying only on standard tools like Python 3 standard library and Bash).
 
 ---

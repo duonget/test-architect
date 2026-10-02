@@ -27,8 +27,7 @@ describe("ServiceOrFunctionUnderTest", () => {
       const result = await processTransaction(input, mockExternalGateway);
 
       // Assert
-      expect(result).toBeDefined();
-      expect(result.id).toBe("tx_123");
+      expect(result).toEqual({ id: "tx_123", status: "completed" });
       expect(mockExternalGateway.sendRequest).toHaveBeenCalledTimes(1);
     });
   });
@@ -76,6 +75,32 @@ describe("ServiceOrFunctionUnderTest", () => {
       await expect(
         processTransaction({ amount: 100, currency: "USD" }, mockExternalGateway)
       ).rejects.toThrow("PaymentGatewayTimeout");
+    });
+  });
+
+  // --------------------------------------------------------------------------
+  // Dimension 5: Concurrency & Idempotency
+  // --------------------------------------------------------------------------
+  describe("Concurrency & Idempotency", () => {
+    it("should share one in-flight operation for concurrent duplicate keys", async () => {
+      // Arrange
+      let resolveRequest!: (value: { status: number; id: string }) => void;
+      mockExternalGateway.sendRequest.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveRequest = resolve;
+        })
+      );
+      const input = { amount: 100, currency: "USD", idempotencyKey: "key-123" };
+
+      // Act
+      const first = processTransaction(input, mockExternalGateway);
+      const second = processTransaction(input, mockExternalGateway);
+      resolveRequest({ status: 200, id: "tx_123" });
+      const results = await Promise.all([first, second]);
+
+      // Assert
+      expect(results[0]).toEqual(results[1]);
+      expect(mockExternalGateway.sendRequest).toHaveBeenCalledTimes(1);
     });
   });
 });

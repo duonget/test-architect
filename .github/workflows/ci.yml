@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ["3.11"]
-        node-version: ["20"]
+        node-version: ["20.19"]
 
     steps:
       - name: Checkout Code
@@ -29,22 +29,36 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
 
-      - name: Check Script Execution Permissions
-        run: |
-          chmod +x scripts/*.sh scripts/*.py install.sh
+      - name: Install Node.js dependencies
+        run: npm ci
 
       - name: Verify Runner Detection Script
-        run: |
-          ./scripts/detect-runner.sh . || true
+        run: ./scripts/detect-runner.sh .
 
-      - name: Verify Mutation Checker Help
+      - name: Check shell and Python syntax
         run: |
-          python3 scripts/mutation-check.py --help
+          bash -n install.sh scripts/*.sh
+          python3 -m py_compile scripts/mutation-check.py tests/test_dogfood.py
 
       - name: Run Self-Audit Dogfooding Test Suite
+        run: python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Type-check TypeScript example
+        run: npm run typecheck
+
+      - name: Run TypeScript example suite
+        run: npm test
+
+      - name: Run Mutation Sanity Gate
         run: |
-          python3 tests/test_dogfood.py -v
+          python3 scripts/mutation-check.py \
+            --target examples/payment-workflow/payment.ts \
+            --validate "npm run typecheck" \
+            --test "npm test" \
+            --max-mutations 2 \
+            --timeout 60
 
       - name: Verify Universal Installer
         run: |
@@ -54,5 +68,5 @@ jobs:
           test -f test-sandbox/.cursor/rules/test-architect.mdc
           test -f test-sandbox/.github/copilot-instructions.md
           test -f test-sandbox/CLAUDE.md
+          test -x test-sandbox/.agents/skills/test-architect/scripts/detect-runner.sh
           rm -rf test-sandbox
-          echo "Universal installer verified successfully!"

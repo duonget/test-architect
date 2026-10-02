@@ -8,7 +8,7 @@
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
     <img src="https://img.shields.io/badge/Agent-Antigravity%20|%20Cursor%20|%20Claude%20Code%20|%20Copilot%20|%20Windsurf-blue.svg" alt="Compatibility" />
     <img src="https://img.shields.io/badge/Languages-TypeScript%20|%20Python%20|%20Go%20|%20Rust-orange.svg" alt="Languages" />
-    <a href="https://github.com/duonget/test-architect/actions"><img src="https://img.shields.io/badge/CI-passing-brightgreen.svg" alt="CI Status" /></a>
+    <a href="https://github.com/duonget/test-architect/actions/workflows/ci.yml"><img src="https://github.com/duonget/test-architect/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
     <a href="https://github.com/duonget/test-architect/pulls"><img src="https://img.shields.io/badge/PRs-welcome-purple.svg" alt="PRs Welcome" /></a>
   </p>
   <p align="center">
@@ -55,7 +55,7 @@ Install Test Architect into your current repository with a single command:
 curl -fsSL https://raw.githubusercontent.com/duonget/test-architect/main/install.sh | bash
 ```
 
-The installer automatically detects your IDE/Agent environment and configures the native integration files:
+The installer downloads the repository payload when streamed and configures the supported integration files:
 - **Google Antigravity**: `.agents/skills/test-architect/`
 - **Cursor**: `.cursor/rules/test-architect.mdc`
 - **Claude Code**: `CLAUDE.md`
@@ -76,20 +76,20 @@ User: "Write unit tests for payment.ts using test-architect"
 
 [Test Architect Agent Activated]
 ├── Phase 1: Discovered Test Runner -> Vitest (v2.1)
-├── Phase 2: Formulated 5-Dimensional Test Matrix (11 Test Cases):
+├── Phase 2: Formulated 5-Dimensional Test Matrix:
 │   ├── Happy Path: TC-01 (USD valid charge), TC-02 (EUR/VND currencies)
 │   ├── Boundary:   TC-03 (1 cent min), TC-04 (0 cent reject), TC-06 ($10k max limit)
 │   ├── Nullability:TC-08 (empty idempotency key), TC-09 (unsupported currency)
 │   ├── Failure:    TC-10 (downstream gateway timeout handling)
-│   └── Concurrency:TC-11 (duplicate charge idempotency check)
+│   └── Concurrency:TC-11 (overlapping duplicate requests), TC-12 (key conflict)
 ├── Phase 3: Authored payment.test.ts (Strict AAA + MVM)
 ├── Phase 4: Autonomous Run & Self-Healing Loop:
 │   └── Running: npx vitest run src/services/payment.test.ts
-│   └── Result: 11 passed (100% GREEN)
+│   └── Result: all cases passed (100% GREEN)
 └── Phase 5: Mutation Sanity Check:
     └── Inverted `amountCents <= 0` to `< 0` -> Tests FAILED (Mutation Killed)
     └── Inverted `amountCents > 1000000` to `>=` -> Tests FAILED (Mutation Killed)
-All 11 tests verified bulletproof. Ready to commit!
+All tests and mutation checks passed. Ready to commit!
 ```
 
 ---
@@ -133,11 +133,12 @@ All 11 tests verified bulletproof. Ready to commit!
 
 ## Mutation Sanity Check in Action
 
-To prove tests are not "fake", Test Architect includes a zero-dependency Python script (`scripts/mutation-check.py`) that temporarily inverts comparison operators (`>` to `>=`, `==` to `!=`):
+To expose weak boundary assertions, Test Architect includes a zero-dependency Python script (`scripts/mutation-check.py`) that temporarily mutates executable comparisons and boolean constants. It restores the source after every run, fails when a mutant survives, and reports invalid mutations separately:
 
 ```bash
 python3 scripts/mutation-check.py \
   --target src/services/payment.ts \
+  --validate "npm run typecheck" \
   --test "npx vitest run src/services/payment.test.ts"
 ```
 
@@ -152,8 +153,8 @@ python3 scripts/mutation-check.py \
       Tests correctly FAILED when logic was altered. Strong assertion detected!
 
 =======================================================
-Mutation Sanity Summary: 2 Killed, 0 Survived.
-[SUCCESS] Excellent! Your test suite successfully caught all injected logic mutations.
+Mutation Summary: 2 Killed, 0 Survived, 0 Invalid.
+[SUCCESS] All valid mutations were killed by the test suite.
 =======================================================
 ```
 

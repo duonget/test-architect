@@ -75,13 +75,13 @@
 
   <!-- Step 5: Autonomous Execution & Mutation -->
   <g class="txt step-5" transform="translate(25, 280)">
-    <text x="0" y="0"><tspan class="dim">├── Phase 4: Autonomous Run -&gt; </tspan><tspan class="tag-pass">11 passed (100% GREEN)</tspan></text>
+    <text x="0" y="0"><tspan class="dim">├── Phase 4: Autonomous Run -&gt; </tspan><tspan class="tag-pass">24 passed (100% GREEN)</tspan></text>
     <text x="0" y="22"><tspan class="dim">├── Phase 5: Mutation Sanity Check -&gt; </tspan><tspan class="tag-killed">[KILLED]</tspan><tspan class="dim"> 2 injected mutants defeated</tspan></text>
   </g>
 
   <!-- Step 6: Success Completion & Cursor -->
   <g class="txt step-6" transform="translate(25, 335)">
-    <text x="0" y="0" class="tag-success">[SUCCESS] All 11 tests verified bulletproof. Ready to commit!</text>
+    <text x="0" y="0" class="tag-success">[SUCCESS] All tests and mutation checks passed. Ready to commit!</text>
     <text x="0" y="28"><tspan class="prompt-sign">$ </tspan><tspan class="cursor">█</tspan></text>
   </g>
 </svg>

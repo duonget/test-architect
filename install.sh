@@ -6,8 +6,47 @@
 set -euo pipefail
 
 SKILL_NAME="test-architect"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_SOURCE="${BASH_SOURCE[0]:-}"
+SCRIPT_DIR=""
+if [ -n "$SCRIPT_SOURCE" ] && [ -f "$SCRIPT_SOURCE" ]; then
+  SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_SOURCE")" && pwd)"
+fi
 TARGET_ROOT="${1:-.}"
+REPOSITORY="${TEST_ARCHITECT_REPOSITORY:-duonget/test-architect}"
+REF="${TEST_ARCHITECT_REF:-main}"
+TEMP_DIR=""
+
+cleanup() {
+  if [ -n "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
+    rm -rf "$TEMP_DIR"
+  fi
+}
+
+trap cleanup EXIT
+
+# A script streamed through stdin has no adjacent repository payload. Download
+# the requested revision first, then install from that isolated copy.
+if [ -n "${TEST_ARCHITECT_SOURCE_DIR:-}" ]; then
+  SCRIPT_DIR="$(cd "$TEST_ARCHITECT_SOURCE_DIR" && pwd)"
+elif [ -z "$SCRIPT_DIR" ] || [ ! -f "$SCRIPT_DIR/SKILL.md" ] || [ ! -d "$SCRIPT_DIR/scripts" ] || [ ! -d "$SCRIPT_DIR/templates" ]; then
+  TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/test-architect.XXXXXX")"
+  ARCHIVE_URL="${TEST_ARCHITECT_ARCHIVE_URL:-https://github.com/$REPOSITORY/archive/$REF.tar.gz}"
+
+  command -v curl >/dev/null 2>&1 || { echo "Error: curl is required for streamed installation." >&2; exit 1; }
+  command -v tar >/dev/null 2>&1 || { echo "Error: tar is required for streamed installation." >&2; exit 1; }
+
+  echo "Downloading Test Architect revision '$REF'..."
+  curl --fail --silent --show-error --location "$ARCHIVE_URL" \
+    | tar -xz --strip-components=1 -C "$TEMP_DIR"
+  SCRIPT_DIR="$TEMP_DIR"
+fi
+
+for required_path in SKILL.md AGENTS.md scripts templates; do
+  if [ ! -e "$SCRIPT_DIR/$required_path" ]; then
+    echo "Error: installation payload is missing '$required_path'." >&2
+    exit 1
+  fi
+done
 
 echo ""
 echo "Test Architect: Universal Agent Skill Installer"
@@ -33,7 +72,7 @@ if [ ! -f "$TARGET_ROOT/AGENTS.md" ]; then
 else
   # Append notice if not already present
   if ! grep -q "Test Architect" "$TARGET_ROOT/AGENTS.md"; then
-    echo -e "\n\n---\n" >> "$TARGET_ROOT/AGENTS.md"
+    printf '\n\n---\n' >> "$TARGET_ROOT/AGENTS.md"
     cat "$SCRIPT_DIR/AGENTS.md" >> "$TARGET_ROOT/AGENTS.md"
     INSTALLED_AGENTS+=("Universal AGENTS.md (Appended)")
   fi

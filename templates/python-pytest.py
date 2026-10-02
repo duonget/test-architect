@@ -46,7 +46,19 @@ class TestServiceUnderTest:
             service.process({"amount": invalid_amount, "currency": "USD"})
 
     # ------------------------------------------------------------------------
-    # Dimension 3 & 4: Nullability and Failure Modes
+    # Dimension 3: Nullability and Schema Defense
+    # ------------------------------------------------------------------------
+    def test_missing_currency_is_rejected_before_gateway_call(self, mock_external_client):
+        # Arrange
+        service = PaymentService(gateway=mock_external_client)
+
+        # Act & Assert
+        with pytest.raises(ValueError, match="currency"):
+            service.process({"amount": 100, "currency": None})
+        mock_external_client.request.assert_not_called()
+
+    # ------------------------------------------------------------------------
+    # Dimension 4: Failure Modes
     # ------------------------------------------------------------------------
     def test_gateway_connection_timeout_raises_custom_error(self, mock_external_client):
         # Arrange
@@ -56,3 +68,19 @@ class TestServiceUnderTest:
         # Act & Assert
         with pytest.raises(ServiceUnavailableError):
             service.process({"amount": 100, "currency": "USD"})
+
+    # ------------------------------------------------------------------------
+    # Dimension 5: Concurrency and Idempotency
+    # ------------------------------------------------------------------------
+    def test_duplicate_idempotency_key_reuses_result(self, mock_external_client):
+        # Arrange
+        service = PaymentService(gateway=mock_external_client)
+        payload = {"amount": 100, "currency": "USD", "idempotency_key": "key-123"}
+
+        # Act
+        first = service.process(payload)
+        second = service.process(payload)
+
+        # Assert
+        assert first == second
+        mock_external_client.request.assert_called_once()

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="Test Architect Logo" width="110" style="border-radius: 20px;" /><br>
+  <img src="./assets/logo.svg" alt="Test Architect Logo" width="100" /><br>
   <h1 align="center">Test Architect</h1>
   <p align="center">
     <strong>The Open-Source Quality Engineering Skill for AI Coding Agents.</strong><br>

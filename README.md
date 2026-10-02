@@ -1,12 +1,12 @@
 <p align="center">
   <h1 align="center">Test Architect</h1>
   <p align="center">
-    <strong>The Open-Source Quality Engineering Skill for AI Coding Agents.</strong><br>
+    <strong>Vendor-neutral testing skills and tools for AI coding agents.</strong><br>
     <em>Stop AI agents from writing shallow "happy path" tests and mocking away your bugs.</em>
   </p>
   <p align="center">
     <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /></a>
-    <img src="https://img.shields.io/badge/Agent-Codex%20|%20OpenCode%20|%20Antigravity%20|%20Cursor%20|%20Claude%20Code%20|%20Copilot%20|%20Windsurf-blue.svg" alt="Codex, OpenCode, Antigravity, Cursor, Claude Code, Copilot and Windsurf compatibility" />
+    <a href="#agent-compatibility-matrix"><img src="https://img.shields.io/badge/Agents-Multi--platform-blue.svg" alt="Multi-platform agent integrations" /></a>
     <img src="https://img.shields.io/badge/Languages-TypeScript%20|%20Python%20|%20Go%20|%20Rust-orange.svg" alt="Languages" />
     <a href="https://github.com/duonget/test-architect/actions/workflows/ci.yml"><img src="https://github.com/duonget/test-architect/actions/workflows/ci.yml/badge.svg" alt="CI Status" /></a>
     <a href="https://github.com/duonget/test-architect/pulls"><img src="https://img.shields.io/badge/PRs-welcome-purple.svg" alt="PRs Welcome" /></a>
@@ -20,7 +20,7 @@
 
 ## The "AI Testing Pandemic"
 
-During rapid AI coding sessions with Codex, OpenCode, Cursor, Claude Code, Antigravity or Copilot, test generation can create a **false sense of security**:
+During rapid AI-assisted coding sessions, generated tests can create a **false sense of security**, regardless of the agent or model provider:
 
 ```
 The Naive AI Testing Trap:
@@ -32,6 +32,13 @@ The Naive AI Testing Trap:
 ```
 
 **Test Architect** helps coding agents design tests that catch real bugs, not just pass. It combines testing instructions with lightweight verification tools; results depend on the agent, project and assertions produced.
+
+The workflow is **vendor-neutral and model-agnostic**: no provider API key, model
+subscription or hosted service is required by these scripts. Use your agent's existing
+model setup. Integrations cover Claude Code, Cline/Roo Code, Cursor, GitHub Copilot,
+Google Antigravity, OpenAI Codex, OpenCode and Windsurf. Other agents can read
+`AGENTS.md` or load `SKILL.md` explicitly. Integration methods differ; effectiveness
+across agents and models must be evaluated rather than assumed.
 
 ---
 
@@ -55,49 +62,26 @@ Install Test Architect into your current repository with a single command:
 curl -fsSL https://raw.githubusercontent.com/duonget/test-architect/main/install.sh | bash
 ```
 
-The installer downloads the repository payload when streamed and configures the supported integration files:
-- **OpenAI Codex**: `.agents/skills/test-architect/` + `AGENTS.md`
-- **OpenCode**: `.agents/skills/test-architect/` + `AGENTS.md`
-- **Google Antigravity**: `.agents/skills/test-architect/`
-- **Cursor**: `.cursor/rules/test-architect.mdc`
-- **Claude Code**: `CLAUDE.md`
-- **GitHub Copilot**: `.github/copilot-instructions.md`
-- **Windsurf**: `.windsurfrules`
-- **Cline / Roo Code**: `.clinerules`
-- **Universal Machine Context**: `AGENTS.md`
+The installer downloads the repository payload when streamed, installs a shared
+skill under `.agents/skills/test-architect/`, and creates project instruction files
+for the integrations listed [below](#agent-compatibility-matrix).
 
 Now, simply prompt your agent:
 > *"Write unit tests for `src/services/payment.ts` using the test-architect skill."*
 
-### OpenAI Codex
+### Use with your agent
 
-Run the installer from your repository root, then open Codex CLI or the IDE extension
-in that repository. Use `/skills` to find the skill, or invoke it explicitly:
+Open the target repository in your agent and use the prompt above. For agents with
+native skill discovery, select `test-architect`; for instruction-based integrations,
+ask the agent to follow `AGENTS.md` and the installed `SKILL.md`.
+See the platform-specific notes in the compatibility table.
 
-```text
-$test-architect Write tests for src/services/payment.ts
-```
-
-Codex discovers the shared `.agents/skills/test-architect/SKILL.md` and its adjacent
-scripts/templates. If the skill does not appear, restart Codex.
-
-### OpenCode
-
-Run the same installer from your repository root, then quit and restart OpenCode
-so the installed skill is loaded. Prompt:
-
-```text
-Load the test-architect skill and write tests for src/services/payment.ts.
-```
-
-OpenCode supports `.agents/skills/` natively, so no duplicate skill under
-`.opencode/skills/` or change to `opencode.json` is required. Existing skill permissions
-still apply; check them if the skill is hidden or denied.
-
-Both integrations share one installed payload. The installer does not modify
-`~/.codex/config.toml`, project/global OpenCode configuration, or agent permissions.
-Discovery paths are documented by [Codex](https://developers.openai.com/codex/skills)
-and [OpenCode](https://opencode.ai/docs/skills/).
+The installer creates missing instruction files; existing Claude Code, Copilot,
+Cline/Roo Code and Windsurf instruction files are preserved. When those files already
+exist, add a reference to `AGENTS.md` and `.agents/skills/test-architect/SKILL.md` yourself.
+The installer appends Test Architect instructions to `AGENTS.md` when absent and
+replaces its own Cursor rule file. Global model settings and agent permissions are
+not configured by this installer.
 
 ---
 
@@ -201,17 +185,43 @@ Mutation Summary: 2 Killed, 0 Survived, 0 Invalid.
 
 ## Agent Compatibility Matrix
 
-| AI Platform | Integration Method | Configuration File |
+Platforms are listed alphabetically, not by preference. These are installation
+adapters, not a claim of identical behavior or measured performance on every agent.
+
+| AI Platform | Integration files | Usage / discovery |
 | :--- | :--- | :--- |
-| **OpenAI Codex** | Native skill discovery + project instructions | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` |
-| **OpenCode** | Native skill discovery + project instructions | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` |
-| **Google Antigravity** | Native Skill System | `.agents/skills/test-architect/SKILL.md` |
-| **Cursor** | Cursor Rule (Project-level) | `.cursor/rules/test-architect.mdc` |
-| **Claude Code** | Agent Instruction Context | `CLAUDE.md` |
-| **GitHub Copilot** | Copilot Workspace Rule | `.github/copilot-instructions.md` |
-| **Windsurf** | Cascade Rules | `.windsurfrules` |
-| **Cline / Roo Code** | Tool & Prompt Guidelines | `.clinerules` |
-| **Any Agent** | Universal Machine Context | `AGENTS.md` |
+| **Claude Code** | `CLAUDE.md` → `AGENTS.md` and shared skill | Ask to follow Test Architect testing instructions. |
+| **Cline / Roo Code** | `.clinerules` → `AGENTS.md` | Ask to read the rules; adapt their reference to your client's supported rule layout if needed. |
+| **Cursor** | `.cursor/rules/test-architect.mdc` | Project rule targets test files; reference Test Architect explicitly when generating new tests. |
+| **GitHub Copilot** | `.github/copilot-instructions.md` | Use repository instructions when asking Copilot to write tests. |
+| **Google Antigravity** | `.agents/skills/test-architect/SKILL.md` | Ask to use the `test-architect` skill. |
+| **OpenAI Codex** | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` | Select via `/skills` or prompt `$test-architect Write tests for <file>`. Restart if absent. |
+| **OpenCode** | `.agents/skills/test-architect/SKILL.md`, `AGENTS.md` | Restart after installation, then ask to load `test-architect`. Existing skill permissions apply. |
+| **Windsurf** | `.windsurfrules` → `AGENTS.md` | Ask Cascade to follow Test Architect testing instructions. |
+| **Other agents** | `AGENTS.md` / `SKILL.md` | Explicitly load the instructions if automatic discovery is unavailable. |
+
+Native discovery references: [Codex](https://developers.openai.com/codex/skills),
+[OpenCode](https://opencode.ai/docs/skills/). Both use the shared skill payload;
+no additional `.opencode/skills/` copy is needed.
+
+## Topics
+
+Core: [#agent-skills](https://github.com/topics/agent-skills)
+[#ai-agents](https://github.com/topics/ai-agents)
+[#software-testing](https://github.com/topics/software-testing)
+[#test-automation](https://github.com/topics/test-automation)
+[#mutation-testing](https://github.com/topics/mutation-testing)
+[#quality-engineering](https://github.com/topics/quality-engineering)
+
+Integrations: [#claude-code](https://github.com/topics/claude-code)
+[#cline](https://github.com/topics/cline)
+[#cursor](https://github.com/topics/cursor)
+[#github-copilot](https://github.com/topics/github-copilot)
+[#google-antigravity](https://github.com/topics/google-antigravity)
+[#codex](https://github.com/topics/codex)
+[#opencode](https://github.com/topics/opencode)
+[#roo-code](https://github.com/topics/roo-code)
+[#windsurf](https://github.com/topics/windsurf)
 
 ---
 

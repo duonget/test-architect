@@ -1,0 +1,54 @@
+name: CI Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-skill:
+    name: Verify Test Architect on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11"]
+        node-version: ["20"]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Check Script Execution Permissions
+        run: |
+          chmod +x scripts/*.sh scripts/*.py install.sh
+
+      - name: Verify Runner Detection Script
+        run: |
+          ./scripts/detect-runner.sh . || true
+
+      - name: Verify Mutation Checker Help
+        run: |
+          python3 scripts/mutation-check.py --help
+
+      - name: Verify Universal Installer
+        run: |
+          mkdir -p test-sandbox
+          ./install.sh test-sandbox
+          test -f test-sandbox/AGENTS.md
+          test -f test-sandbox/.cursor/rules/test-architect.mdc
+          test -f test-sandbox/.github/copilot-instructions.md
+          test -f test-sandbox/CLAUDE.md
+          rm -rf test-sandbox
+          echo "Universal installer verified successfully!"

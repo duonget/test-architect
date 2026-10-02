@@ -1,0 +1,29 @@
+name: 🐛 Bug Report
+description: Report a bug, broken heuristic, or runner detection failure in Test Architect.
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report an issue!
+  - type: input
+    id: environment
+    attributes:
+      label: AI Agent / IDE Environment
+      description: e.g. Antigravity, Cursor 0.44, Claude Code, VS Code Copilot
+      placeholder: Cursor 0.44 with Claude 3.5 Sonnet
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug or unwanted behavior produced by the agent.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should the Test Architect skill have done instead?
+    validations:
+      required: true

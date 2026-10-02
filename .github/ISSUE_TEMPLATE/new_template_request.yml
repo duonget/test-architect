@@ -1,0 +1,22 @@
+name: ✨ New Language / Framework Template Request
+description: Propose a new language, testing framework, or runner detector for Test Architect.
+labels: ["enhancement", "template-request"]
+body:
+  - type: markdown
+    attributes:
+      value: Help us expand Test Architect to more languages and testing frameworks!
+  - type: input
+    id: language
+    attributes:
+      label: Target Language & Framework
+      description: e.g. Elixir (ExUnit), C# .NET (xUnit), Ruby (RSpec), Kotlin (Kotest)
+      placeholder: Elixir + ExUnit
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Idiomatic Testing Patterns
+      description: What are the standard assertion styles, mocking libraries, and table-driven patterns for this framework?
+    validations:
+      required: true
